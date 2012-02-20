@@ -21,6 +21,8 @@ var filtered=false;
 
 //parse regexp- accepts digits, decimals and '?'
 var reg=/\((\x3f|\d*\.?\d+)\)\s?/m;
+var storyReg = /\(story:(\d+)\)/m;
+var taskOfStoryReg = /\(taskOf:(\d+)\)/m;
 
 var iconUrl = chrome.extension.getURL('images/storypoints-icon.png');
 
@@ -71,16 +73,22 @@ function listCard(e){
 	this.listCard=true;
 
 	var points=-1,
+		storyId=-1,
+		taskOfStoryId=-1,
 		parsed,
 		that=this,
 		$card=$(this),
 		busy=false,
 		$badge=$('<span class="badge badge-points point-count" style="background-image: url('+iconUrl+') !important;">');
+		$story=$('<span class="badge badge-story">');
+		$partof=$('<span class="badge badge-partof">');
 
 	if($card.hasClass('placeholder'))return;
 
 	$card.bind('DOMNodeInserted',function(e){
-		if(!busy&&$(e.target).hasClass('list-card-title'))setTimeout(getPoints)
+		if(!busy&&$(e.target).hasClass('list-card-title'))setTimeout(getPoints);
+		if(!busy&&$(e.target).hasClass('list-card-title'))setTimeout(getStory);
+		if(!busy&&$(e.target).hasClass('list-card-title'))setTimeout(getTaskOf);
 	});
 
 	function getPoints(){
@@ -88,7 +96,6 @@ function listCard(e){
 		if(!$title[0])return;
 		busy=true;
 		var title=$title.html();
-		//alert(title)
 		parsed=($title[0].otitle||title).match(reg);
 		points=parsed?parsed[1]:title;
 		if(points!=title)$title[0].otitle=title;
@@ -100,13 +107,59 @@ function listCard(e){
 		busy=false;
 		calcPoints($card.closest('.list'))
 	};
+	
+	function getStory(){
+		var $title=$card.find('a.list-card-title');
+		if(!$title[0])return;
+		busy=true;
+		var title=$title.html();
+		parsed=($title[0].otitle||title).match(storyReg);
+		storyId=parsed?parsed[1]:title;
+		if(storyId!=title)$title[0].otitle=title;
+		$title.html($title.html().replace(storyReg,''));
+		if($card.parent()[0]){
+			if(that.storyId != "") {
+				$story.text('story: ' + that.storyId).prependTo($card.find('.badges'));
+			}
+		}
+		busy=false;
+	};
+
+	function getTaskOf(){
+		var $title=$card.find('a.list-card-title');
+		if(!$title[0])return;
+		busy=true;
+		var title=$title.html();
+		parsed=($title[0].otitle||title).match(taskOfStoryReg);
+		taskOfStoryId=parsed?parsed[1]:title;
+		if(taskOfStoryId!=title)$title[0].otitle=title;
+		$title.html($title.html().replace(taskOfStoryReg,''));
+		if($card.parent()[0]){
+			if(that.taskOfStoryId != "") {
+				$partof.text('task of story: ' + that.taskOfStoryId).prependTo($card.find('.badges'));
+			}
+		}
+		busy=false;
+	};
 
 	this.__defineGetter__('points',function(){
 		//don't add to total when filtered out
 		return parsed&&(!filtered||($card.css('opacity')==1 && $card.css('display')!='none'))?points:''
 	});
+	
+	this.__defineGetter__('storyId',function(){
+		//don't add to total when filtered out
+		return parsed&&(!filtered||($card.css('opacity')==1 && $card.css('display')!='none'))?storyId:''
+	});
+	
+	this.__defineGetter__('taskOfStoryId',function(){
+		//don't add to total when filtered out
+		return parsed&&(!filtered||($card.css('opacity')==1 && $card.css('display')!='none'))?taskOfStoryId:''
+	});
 
-	getPoints()
+	getPoints();
+	getTaskOf();
+	getStory();
 };
 
 //forcibly calculate list totals
