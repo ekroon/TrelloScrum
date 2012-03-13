@@ -20,8 +20,8 @@
 var filtered=false;
 
 //parse regexp- accepts digits, decimals and '?'
-var reg=/\((\x3f|\d*\.?\d+)\)\s?/m;
-var storyReg = /\(s(\d+)\)/m;
+var reg=/\(points:(\x3f|\d*\.?\d+)\)\s?/m;
+var storyReg = /\(story:(\d+)\)/m;
 
 var iconUrl = chrome.extension.getURL('images/storypoints-icon.png');
 
